@@ -1,0 +1,135 @@
+# INFO 607 - TP2 - Exercice 2 : Algorithme de Rabin-Karp
+# On travaille uniquement avec des chaines de chiffres "0"..."9"
+
+import time
+import random
+
+MOD  = 10**9 + 7  # grand nombre premier pour eviter les collisions de hash
+BASE = 10         # base 10 car on travaille avec des chiffres
+
+
+# Q2.1 - Algorithme Brute-Force
+
+# Entree : texte (str), motif (str) a rechercher
+# Sortie : liste des positions (int) ou le motif commence
+# Role   : teste toutes les positions une par une,
+#          compare directement le sous-texte avec le motif
+def brute_force(texte, motif):
+    n = len(texte)
+    m = len(motif)
+    positions = []
+
+    for i in range(n - m + 1):
+        if texte[i : i + m] == motif:
+            positions.append(i)
+
+    return positions
+
+
+# Q2.2 - Algorithme de Rabin-Karp
+
+# Entree : chaine (str) de chiffres
+# Sortie : valeur de hachage (int)
+# Role   : traite la chaine comme un nombre en base 10
+#          ex: "534" -> 5*100 + 3*10 + 4 = 534, puis modulo MOD
+def hash_chaine(chaine):
+    valeur = 0
+    for caractere in chaine:
+        valeur = (valeur * BASE + int(caractere)) % MOD
+    return valeur
+
+
+# Entree : hash_actuel (int), ancien_char (str) qui sort a gauche,
+#          nouveau_char (str) qui entre a droite,
+#          puissance_haute (int) = BASE^(m-1) % MOD
+# Sortie : nouveau hash (int) apres le glissement d'un cran
+# Role   : met a jour le hash sans tout recalculer,
+#          on enleve l'ancien caractere de gauche et on ajoute le nouveau a droite
+def hash_suivant(hash_actuel, ancien_char, nouveau_char, puissance_haute):
+    nouveau_hash = ((hash_actuel - int(ancien_char) * puissance_haute) * BASE + int(nouveau_char)) % MOD
+    return nouveau_hash % MOD
+
+
+# Entree : texte (str), motif (str) a rechercher
+# Sortie : liste des positions (int) ou le motif commence
+# Role   : calcule le hash du motif et glisse une fenetre sur le texte,
+#          compare les hashs d'abord (rapide), puis verifie exactement si egal
+def rabin_karp(texte, motif):
+    n = len(texte)
+    m = len(motif)
+    positions = []
+
+    if m > n:
+        return positions
+
+    puissance_haute = 1
+    for _ in range(m - 1):
+        puissance_haute = (puissance_haute * BASE) % MOD
+
+    hash_motif   = hash_chaine(motif)
+    hash_fenetre = hash_chaine(texte[0:m])
+
+    for i in range(n - m + 1):
+        if hash_fenetre == hash_motif:
+            if texte[i : i + m] == motif:
+                positions.append(i)
+
+        if i < n - m:
+            hash_fenetre = hash_suivant(hash_fenetre, texte[i], texte[i + m], puissance_haute)
+
+    return positions
+
+
+# Q2.3 - Comparaison des performances
+
+# Entree : taille (int)
+# Sortie : chaine (str) de chiffres aleatoires
+# Role   : genere un texte de test
+def generer_texte_chiffres(taille):
+    return ''.join([str(random.randint(0, 9)) for _ in range(taille)])
+
+
+# Entree : taille_texte (int), taille_motif (int)
+# Sortie : affiche les temps d'execution et le nombre d'occurrences trouvees
+# Role   : compare brute-force et Rabin-Karp sur un meme texte aleatoire
+def comparer_algorithmes(taille_texte=100000, taille_motif=5):
+    texte = generer_texte_chiffres(taille_texte)
+    motif = generer_texte_chiffres(taille_motif)
+
+    print(f"\n--- Comparaison : texte={taille_texte} chars, motif='{motif}' ---")
+
+    debut = time.time()
+    res_bf = brute_force(texte, motif)
+    print(f"Brute-Force : {time.time() - debut:.4f} sec | {len(res_bf)} occurrence(s)")
+
+    debut = time.time()
+    res_rk = rabin_karp(texte, motif)
+    print(f"Rabin-Karp  : {time.time() - debut:.4f} sec | {len(res_rk)} occurrence(s)")
+
+    if sorted(res_bf) == sorted(res_rk):
+        print("OK : les deux algorithmes donnent les memes resultats.")
+    else:
+        print("ERREUR : les resultats different !")
+
+
+# Tests
+
+if __name__ == "__main__":
+    print("=== Test Brute-Force ===")
+    texte = "1234534534"
+    motif = "345"
+    print(f"brute_force('{texte}', '{motif}') = {brute_force(texte, motif)}")
+
+    print("\n=== Test hash ===")
+    print(f"hash_chaine('345') = {hash_chaine('345')}")
+    print(f"hash_chaine('534') = {hash_chaine('534')}")
+
+    print("\n=== Test Rabin-Karp ===")
+    print(f"rabin_karp('{texte}', '{motif}') = {rabin_karp(texte, motif)}")
+
+    print("\n=== Test motif absent ===")
+    print(f"rabin_karp('1111111111', '222') = {rabin_karp('1111111111', '222')}")
+
+    print("\n=== Comparaison des performances ===")
+    comparer_algorithmes(100000, 5)
+    comparer_algorithmes(100000, 3)
