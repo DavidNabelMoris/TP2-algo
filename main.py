@@ -253,3 +253,21 @@ if __name__ == "__main__":
 
     print("\n=== Performances ===")
     comparer_performances(2000)
+
+
+
+    print(f"\n--- Comparaison sur 10 000 elements iteratif ---")
+    liste_10000 = [random.randint(0, 10000) for _ in range(10000)]
+    copie2 = liste_10000[:]
+    debut = time.time()
+    TRI_iter(copie2)
+    fin = time.time()
+    print(f"Iteratif  10000 : {fin - debut:.4f} secondes")
+
+    print(f"\n--- Comparaison sur 10 000 000 elements iteratif ---")
+    liste_10000000 = [random.randint(0, 10000) for _ in range(10000000)]
+    copie2 = liste_10000000[:]
+    debut = time.time()
+    TRI_iter(copie2)
+    fin = time.time()
+    print(f"Iteratif  10 000 000 : {fin - debut:.4f} secondes")
